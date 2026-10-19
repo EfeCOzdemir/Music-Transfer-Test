@@ -1,5 +1,5 @@
 /* Music Transfer Test — transfers playlists between Spotify, YouTube Music and Apple Music.
- * Runs fully in the browser: Spotify via OAuth PKCE, YouTube via Google Identity Services,
+ * Runs fully in the browser: Spotify via OAuth PKCE redirect, YouTube via Google OAuth redirect,
  * Apple Music via MusicKit JS.
  */
 'use strict';
@@ -162,6 +162,7 @@ async function spotifyLogin() {
     code_challenge_method: 'S256', code_challenge: challenge, scope: SP_SCOPES, state: st,
   });
   location.href = 'https://accounts.spotify.com/authorize?' + p;
+  return 'redirect';
 }
 
 async function spotifyTokenRequest(body) {
@@ -325,38 +326,34 @@ const spotify = {
  * YouTube Music (YouTube Data API v3)
  * ================================================================ */
 
-let ytTokenClient = null;
-let ytPending = null;
-
-function ytInitClient() {
-  if (ytTokenClient) return ytTokenClient;
-  if (!window.google?.accounts?.oauth2) throw new Error('Google sign-in is still loading, try again in a second');
-  ytTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: cfg().googleClientId,
-    scope: 'https://www.googleapis.com/auth/youtube',
-    callback: (resp) => {
-      const p = ytPending; ytPending = null;
-      if (resp.error) return p?.reject(new Error('Google login failed: ' + resp.error));
-      sessionStorage.setItem('yt_token', JSON.stringify({ access: resp.access_token, expires: Date.now() + (resp.expires_in - 60) * 1000 }));
-      p?.resolve(resp.access_token);
-    },
-    error_callback: (e) => { const p = ytPending; ytPending = null; p?.reject(new Error('Google login: ' + (e.message || e.type))); },
+// Google sign-in as a full-page redirect (like Spotify), which also works well on phones
+function googleLogin() {
+  const st = b64url(crypto.getRandomValues(new Uint8Array(16)));
+  sessionStorage.setItem('yt_state', st);
+  const p = new URLSearchParams({
+    client_id: cfg().googleClientId, redirect_uri: REDIRECT_URI, response_type: 'token',
+    scope: 'https://www.googleapis.com/auth/youtube', state: st, include_granted_scopes: 'true',
   });
-  return ytTokenClient;
+  location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + p;
+  return 'redirect';
 }
 
-function ytRequestToken(prompt) {
-  return new Promise((resolve, reject) => {
-    ytPending = { resolve, reject };
-    ytInitClient().requestAccessToken({ prompt });
-  });
+function handleGoogleCallback() {
+  const q = new URLSearchParams(location.hash.slice(1));
+  if (!q.has('access_token') && !q.has('error')) return;
+  history.replaceState(null, '', location.pathname);
+  if (q.get('error')) return toast('YouTube login cancelled: ' + q.get('error'), true);
+  if (q.get('state') !== sessionStorage.getItem('yt_state')) return toast('YouTube login state mismatch, try again.', true);
+  sessionStorage.removeItem('yt_state');
+  store.set('yt_token', { access: q.get('access_token'), expires: Date.now() + (Number(q.get('expires_in')) - 60) * 1000 });
 }
 
 async function ytToken() {
-  const t = JSON.parse(sessionStorage.getItem('yt_token') || 'null');
+  const t = store.get('yt_token');
   if (t && Date.now() < t.expires) return t.access;
-  if (!store.get('yt_connected')) throw new Error('YouTube is not connected');
-  return ytRequestToken('');
+  store.del('yt_token');
+  youtube.channel = null;
+  throw new Error('YouTube sign-in expired (it lasts 1 hour). Click Connect again.');
 }
 
 class QuotaError extends Error {}
@@ -373,7 +370,7 @@ async function yt(path, opts = {}) {
     if (reason === 'quotaExceeded' || reason === 'dailyLimitExceeded') {
       throw new QuotaError('YouTube daily API quota used up. It resets at midnight Pacific time — run again then (progress is remembered).');
     }
-    if (res.status === 401) { sessionStorage.removeItem('yt_token'); continue; }
+    if (res.status === 401) { store.del('yt_token'); continue; }
     if (res.status === 409 || res.status >= 500) { await sleep(1500 * (attempt + 1)); continue; }
     throw new Error('YouTube: ' + (data.error?.message || res.status));
   }
@@ -392,29 +389,18 @@ const youtube = {
   playlists: [],
 
   hasConfig: () => !!cfg().googleClientId,
-
-  async connect() {
-    try {
-      await ytRequestToken(store.get('yt_connected') ? '' : 'consent');
-      store.set('yt_connected', true);
-    } catch (e) {
-      return toast(e.message, true);
-    }
-    await this.load();
-  },
+  connect: googleLogin,
 
   disconnect() {
-    const t = JSON.parse(sessionStorage.getItem('yt_token') || 'null');
-    if (t && window.google?.accounts?.oauth2) google.accounts.oauth2.revoke(t.access, () => {});
-    sessionStorage.removeItem('yt_token'); store.del('yt_connected');
+    const t = store.get('yt_token');
+    if (t) fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(t.access), { method: 'POST', mode: 'no-cors' }).catch(() => {});
+    store.del('yt_token');
     this.channel = null; this.playlists = [];
   },
 
-  // Restore after the Spotify login redirect if the token is still valid.
-  // An expired one needs a click on Connect, since browsers block sign-in popups without one.
   async restore() {
-    const t = JSON.parse(sessionStorage.getItem('yt_token') || 'null');
-    if (!this.channel && t && Date.now() < t.expires && store.get('yt_connected')) await this.load();
+    const t = store.get('yt_token');
+    if (!this.channel && t && Date.now() < t.expires) await this.load();
   },
 
   async load() {
@@ -912,7 +898,6 @@ function init() {
       googleClientId: $('#ggClientId').value.trim(),
       appleDevToken: $('#amDevToken').value.trim(),
     });
-    ytTokenClient = null;
     amConfigured = null;
     refresh();
   };
@@ -930,14 +915,30 @@ function init() {
   };
 
   for (const [id, svc] of Object.entries(services)) {
-    $(`#${id}Connect`).onclick = async () => {
-      if (!svc.hasConfig()) return openSettings();
-      await svc.connect();
+    $(`#${id}Connect`).onclick = async (e) => {
+      if (!svc.hasConfig()) {
+        toast(`${svc.name} isn't set up on this site yet. Add its key in Site setup.`, true);
+        return openSettings();
+      }
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = `Opening ${svc.name}…`;
+      // Spotify and YouTube leave the page for their sign-in; Apple signs in through its own window
+      let result;
+      try { result = await svc.connect(); }
+      finally {
+        if (result !== 'redirect') { btn.disabled = false; btn.textContent = 'Connect'; }
+      }
       renderAccounts();
       renderPlaylists();
     };
     $(`#${id}Logout`).onclick = () => { svc.disconnect(); renderAccounts(); renderPlaylists(); };
   }
+  // Coming back with the browser's Back button from a sign-in page restores the old page state
+  window.addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    for (const id of Object.keys(services)) { $(`#${id}Connect`).disabled = false; $(`#${id}Connect`).textContent = 'Connect'; }
+  });
 
   $('#fromService').onchange = () => onDirectionChange('from');
   $('#toService').onchange = () => onDirectionChange('to');
@@ -962,6 +963,7 @@ function init() {
   const preconfigure = () => { if (cfg().appleDevToken) amConfigure().catch(() => {}); };
   if (window.MusicKit) preconfigure(); else document.addEventListener('musickitloaded', preconfigure);
 
+  handleGoogleCallback();
   handleSpotifyCallback()
     .catch((e) => toast(e.message, true))
     .finally(refresh);
