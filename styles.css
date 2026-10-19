@@ -316,3 +316,6 @@ summary { cursor: pointer; color: var(--accent-2); font-weight: 500; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
 }
+/* Footer "Site setup" link */
+.link-btn { background: none; padding: 0; color: var(--faint); font-size: 13px; text-decoration: underline; text-underline-offset: 2px; }
+.link-btn:hover { color: var(--text); }
