@@ -11,7 +11,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js" async></script>
 </head>
 <body>
@@ -53,10 +52,6 @@
     </a>
     <div class="nav-actions">
       <a class="nav-link" href="#how">How it works</a>
-      <button id="openSettings" class="btn btn-ghost btn-sm">
-        <svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
-        Settings
-      </button>
     </div>
   </nav>
 
@@ -120,7 +115,7 @@
       </div>
       <p class="notice" id="setupHint" hidden>
         <svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-        <span>First add the developer keys for the services you use in <a href="#" id="setupLink">Settings</a>.</span>
+        <span>This site isn't set up yet. Site owner: add the developer keys in <a href="#" id="setupLink">Site setup</a>.</span>
       </p>
     </section>
 
@@ -228,17 +223,19 @@
     <span>Music Transfer Test</span>
     <span class="dot-sep">·</span>
     <span>Not affiliated with Spotify, Google or Apple</span>
+    <span class="dot-sep">·</span>
+    <button id="openSettings" class="link-btn">Site setup</button>
   </footer>
 
   <dialog id="settings">
     <form method="dialog" class="settings-form">
       <div class="dialog-head">
-        <h2>Settings</h2>
+        <h2>Site setup</h2>
         <button value="cancel" class="icon-btn" aria-label="Close">
           <svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
         </button>
       </div>
-      <p class="hint">Each service needs a developer registration. Fill in only the ones you use. Keys stay in this browser.</p>
+      <p class="hint">For the site owner. Each service needs a developer registration; fill in only the ones you use. Keys entered here stay in this browser. To set them for every visitor, put them in config.js.</p>
 
       <div class="key-block">
         <label for="spClientId"><svg><use href="#i-spotify"/></svg> Spotify Client ID</label>
@@ -264,6 +261,7 @@
             <li>OAuth consent screen → External → add yourself as a <b>Test user</b>.</li>
             <li>Credentials → Create credentials → OAuth client ID → <b>Web application</b>.</li>
             <li>Authorized JavaScript origin: <code class="copy" data-copy-origin></code></li>
+            <li>Authorized redirect URI: <code class="copy" data-copy-redirect></code></li>
             <li>Copy the <b>Client ID</b> here.</li>
           </ol>
         </details>
