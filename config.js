@@ -3,6 +3,6 @@
 // Client IDs are designed to be public, so it's fine for these to be in a published site.
 window.APP_CONFIG = {
   spotifyClientId: '',
-  googleClientId: '',
+  googleClientId: '857785730973-dt949ck08fqpgls0gabnu2crfog6ctrm.apps.googleusercontent.com',
   appleDevToken: '',
 };
