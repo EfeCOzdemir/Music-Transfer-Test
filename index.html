@@ -4,61 +4,135 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Music Transfer Test</title>
+  <meta name="description" content="Move playlists between Spotify, YouTube Music and Apple Music. Free, private, runs in your browser.">
+  <meta name="theme-color" content="#0b0d12">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%231db954'/%3E%3Cstop offset='.5' stop-color='%237c6cff'/%3E%3Cstop offset='1' stop-color='%23ff3d5a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M9 12h12l-3-3M23 20H11l3 3' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js" async></script>
 </head>
 <body>
-  <header class="top">
-    <div class="brand">
-      <span class="logo" aria-hidden="true">⇄</span>
-      <div>
-        <h1>Music Transfer Test</h1>
-        <p class="sub">Move playlists between Spotify, YouTube Music and Apple Music</p>
-      </div>
+  <!-- Service icons, reused below -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="amGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fb5c74"/><stop offset="1" stop-color="#fa233b"/>
+      </linearGradient>
+      <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#1db954"/><stop offset=".5" stop-color="#7c6cff"/><stop offset="1" stop-color="#ff3d5a"/>
+      </linearGradient>
+    </defs>
+    <symbol id="i-spotify" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="12" fill="#1db954"/>
+      <path d="M6.3 9.4c3.9-1.2 8-.9 11.4 1M7 12.6c3.1-.9 6.3-.6 9 .9M7.7 15.6c2.4-.6 4.7-.4 6.7.7" fill="none" stroke="#0b0d12" stroke-width="1.7" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-youtube" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="12" fill="#ff0033"/>
+      <circle cx="12" cy="12" r="6.4" fill="none" stroke="#fff" stroke-width="1.3"/>
+      <path d="M10.2 9.3v5.4l4.6-2.7z" fill="#fff"/>
+    </symbol>
+    <symbol id="i-apple" viewBox="0 0 24 24">
+      <rect width="24" height="24" rx="6" fill="url(#amGrad)"/>
+      <path d="M16 5.8v8.9a2.1 2.1 0 1 1-1.4-2V8.6l-5 1.1v6.6a2.1 2.1 0 1 1-1.4-2V7.6z" fill="#fff"/>
+    </symbol>
+    <symbol id="i-logo" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="9" fill="url(#logoGrad)"/>
+      <path d="M9 12h12l-3-3M23 20H11l3 3" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </svg>
+
+  <div class="glow" aria-hidden="true"></div>
+
+  <nav class="nav">
+    <a class="brand" href="./">
+      <svg class="brand-mark"><use href="#i-logo"/></svg>
+      <span>Music Transfer Test</span>
+    </a>
+    <div class="nav-actions">
+      <a class="nav-link" href="#how">How it works</a>
+      <button id="openSettings" class="btn btn-ghost btn-sm">
+        <svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+        Settings
+      </button>
     </div>
-    <button id="openSettings" class="ghost">Settings</button>
+  </nav>
+
+  <header class="hero">
+    <p class="eyebrow"><span class="pulse"></span> Free · Private · Runs in your browser</p>
+    <h1>Move your playlists<br><span class="grad">between any music service</span></h1>
+    <p class="lede">Copy playlists between Spotify, YouTube Music and Apple Music in a few clicks. Review every match before anything is added.</p>
+    <div class="hero-services" aria-hidden="true">
+      <span class="svc-chip"><svg><use href="#i-spotify"/></svg>Spotify</span>
+      <span class="hero-arrow">⇄</span>
+      <span class="svc-chip"><svg><use href="#i-youtube"/></svg>YouTube Music</span>
+      <span class="hero-arrow">⇄</span>
+      <span class="svc-chip"><svg><use href="#i-apple"/></svg>Apple Music</span>
+    </div>
   </header>
 
   <main>
     <!-- Step 1: accounts -->
     <section class="card">
-      <h2><span class="num">1</span> Connect your accounts</h2>
-      <p class="hint">Connect the two services you want to move between.</p>
+      <div class="card-head">
+        <span class="step">1</span>
+        <div>
+          <h2>Connect your accounts</h2>
+          <p class="card-sub">Connect the two services you want to move between.</p>
+        </div>
+      </div>
       <div class="accounts">
         <div class="account">
-          <div class="acc-head"><span class="dot sp"></span> Spotify</div>
-          <p class="acc-status" id="spotifyStatus">Not connected</p>
+          <svg class="acc-icon"><use href="#i-spotify"/></svg>
+          <div class="acc-body">
+            <div class="acc-name">Spotify</div>
+            <p class="acc-status" id="spotifyStatus">Not connected</p>
+          </div>
           <div class="acc-actions">
-            <button id="spotifyConnect" class="btn sp-btn">Connect</button>
-            <button id="spotifyLogout" class="ghost small" hidden>Disconnect</button>
+            <button id="spotifyConnect" class="btn btn-sp">Connect</button>
+            <button id="spotifyLogout" class="btn btn-ghost btn-sm" hidden>Disconnect</button>
           </div>
         </div>
         <div class="account">
-          <div class="acc-head"><span class="dot yt"></span> YouTube Music</div>
-          <p class="acc-status" id="youtubeStatus">Not connected</p>
+          <svg class="acc-icon"><use href="#i-youtube"/></svg>
+          <div class="acc-body">
+            <div class="acc-name">YouTube Music</div>
+            <p class="acc-status" id="youtubeStatus">Not connected</p>
+          </div>
           <div class="acc-actions">
-            <button id="youtubeConnect" class="btn yt-btn">Connect</button>
-            <button id="youtubeLogout" class="ghost small" hidden>Disconnect</button>
+            <button id="youtubeConnect" class="btn btn-yt">Connect</button>
+            <button id="youtubeLogout" class="btn btn-ghost btn-sm" hidden>Disconnect</button>
           </div>
         </div>
         <div class="account">
-          <div class="acc-head"><span class="dot am"></span> Apple Music</div>
-          <p class="acc-status" id="appleStatus">Not connected</p>
+          <svg class="acc-icon"><use href="#i-apple"/></svg>
+          <div class="acc-body">
+            <div class="acc-name">Apple Music</div>
+            <p class="acc-status" id="appleStatus">Not connected</p>
+          </div>
           <div class="acc-actions">
-            <button id="appleConnect" class="btn am-btn">Connect</button>
-            <button id="appleLogout" class="ghost small" hidden>Disconnect</button>
+            <button id="appleConnect" class="btn btn-am">Connect</button>
+            <button id="appleLogout" class="btn btn-ghost btn-sm" hidden>Disconnect</button>
           </div>
         </div>
       </div>
-      <p class="hint" id="setupHint" hidden>
-        Add the developer keys for the services you use in <a href="#" id="setupLink">Settings</a> first.
+      <p class="notice" id="setupHint" hidden>
+        <svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span>First add the developer keys for the services you use in <a href="#" id="setupLink">Settings</a>.</span>
       </p>
     </section>
 
     <!-- Step 2: choose -->
     <section class="card" id="chooseCard">
-      <h2><span class="num">2</span> Choose what to move</h2>
+      <div class="card-head">
+        <span class="step">2</span>
+        <div>
+          <h2>Choose what to move</h2>
+          <p class="card-sub">Pick a direction and a playlist.</p>
+        </div>
+      </div>
       <div class="direction">
         <div class="field">
           <label for="fromService">From</label>
@@ -68,7 +142,9 @@
             <option value="apple">Apple Music</option>
           </select>
         </div>
-        <button id="swapBtn" class="ghost swap" title="Swap direction" aria-label="Swap direction">⇄</button>
+        <button id="swapBtn" class="swap" title="Swap direction" aria-label="Swap direction">
+          <svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M7 7h12l-4-4M17 17H5l4 4"/></svg>
+        </button>
         <div class="field">
           <label for="toService">To</label>
           <select id="toService">
@@ -95,14 +171,20 @@
       </div>
       <p class="hint" id="quotaHint"></p>
       <div class="row">
-        <button id="matchBtn" class="btn primary" disabled>Find matches</button>
-        <button id="stopBtn" class="ghost" hidden>Stop</button>
+        <button id="matchBtn" class="btn btn-primary btn-lg" disabled>Find matches</button>
+        <button id="stopBtn" class="btn btn-ghost" hidden>Stop</button>
       </div>
     </section>
 
     <!-- Step 3: review -->
     <section class="card" id="reviewCard" hidden>
-      <h2><span class="num">3</span> Review and transfer</h2>
+      <div class="card-head">
+        <span class="step">3</span>
+        <div>
+          <h2>Review and transfer</h2>
+          <p class="card-sub">Untick anything that looks wrong before transferring.</p>
+        </div>
+      </div>
       <div class="progress"><div class="bar" id="bar"></div></div>
       <p class="progress-text" id="progressText"></p>
       <div class="summary" id="summary"></div>
@@ -113,63 +195,102 @@
         </table>
       </div>
       <div class="row">
-        <button id="transferBtn" class="btn primary" disabled>Transfer</button>
-        <button id="exportBtn" class="ghost">Download unmatched list</button>
+        <button id="transferBtn" class="btn btn-primary btn-lg" disabled>Transfer</button>
+        <button id="exportBtn" class="btn btn-ghost">Download unmatched list</button>
       </div>
       <div id="result" class="result" hidden></div>
     </section>
+
+    <!-- How it works -->
+    <section class="how" id="how">
+      <h2>How it works</h2>
+      <div class="how-grid">
+        <div class="how-item">
+          <div class="how-ico"><svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+          <h3>Private by design</h3>
+          <p>There's no server. Your logins and playlists go straight between your browser and each music service.</p>
+        </div>
+        <div class="how-item">
+          <div class="how-ico"><svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+          <h3>Smart matching</h3>
+          <p>Songs are matched by recording ID (ISRC) when possible. Otherwise titles are cleaned up, removing tags like "(Official Video)".</p>
+        </div>
+        <div class="how-item">
+          <div class="how-ico"><svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <h3>You stay in control</h3>
+          <p>Check every match before transferring. Re-runs skip songs that are already in the destination playlist.</p>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <footer class="footer">
+    <span>Music Transfer Test</span>
+    <span class="dot-sep">·</span>
+    <span>Not affiliated with Spotify, Google or Apple</span>
+  </footer>
 
   <dialog id="settings">
     <form method="dialog" class="settings-form">
-      <h2>Settings</h2>
+      <div class="dialog-head">
+        <h2>Settings</h2>
+        <button value="cancel" class="icon-btn" aria-label="Close">
+          <svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
       <p class="hint">Each service needs a developer registration. Fill in only the ones you use. Keys stay in this browser.</p>
 
-      <label for="spClientId">Spotify Client ID</label>
-      <input id="spClientId" type="text" autocomplete="off" spellcheck="false">
-      <details>
-        <summary>How to get it</summary>
-        <ol>
-          <li>Open <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">developer.spotify.com/dashboard</a> → <b>Create app</b>.</li>
-          <li>Redirect URI: <code class="copy" data-copy-redirect></code></li>
-          <li>Tick <b>Web API</b>, save, then copy the <b>Client ID</b> here.</li>
-        </ol>
-      </details>
+      <div class="key-block">
+        <label for="spClientId"><svg><use href="#i-spotify"/></svg> Spotify Client ID</label>
+        <input id="spClientId" type="text" autocomplete="off" spellcheck="false">
+        <details>
+          <summary>How to get it</summary>
+          <ol>
+            <li>Open <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">developer.spotify.com/dashboard</a> → <b>Create app</b>.</li>
+            <li>Redirect URI: <code class="copy" data-copy-redirect></code></li>
+            <li>Tick <b>Web API</b>, save, then copy the <b>Client ID</b> here.</li>
+          </ol>
+        </details>
+      </div>
 
-      <label for="ggClientId">Google OAuth Client ID (YouTube Music)</label>
-      <input id="ggClientId" type="text" autocomplete="off" spellcheck="false">
-      <details>
-        <summary>How to get it</summary>
-        <ol>
-          <li>Open <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a> and create a project.</li>
-          <li>APIs &amp; Services → Library → enable <b>YouTube Data API v3</b>.</li>
-          <li>OAuth consent screen → External → add yourself as a <b>Test user</b>.</li>
-          <li>Credentials → Create credentials → OAuth client ID → <b>Web application</b>.</li>
-          <li>Authorized JavaScript origin: <code class="copy" data-copy-origin></code></li>
-          <li>Copy the <b>Client ID</b> here.</li>
-        </ol>
-      </details>
+      <div class="key-block">
+        <label for="ggClientId"><svg><use href="#i-youtube"/></svg> Google OAuth Client ID (YouTube Music)</label>
+        <input id="ggClientId" type="text" autocomplete="off" spellcheck="false">
+        <details>
+          <summary>How to get it</summary>
+          <ol>
+            <li>Open <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a> and create a project.</li>
+            <li>APIs &amp; Services → Library → enable <b>YouTube Data API v3</b>.</li>
+            <li>OAuth consent screen → External → add yourself as a <b>Test user</b>.</li>
+            <li>Credentials → Create credentials → OAuth client ID → <b>Web application</b>.</li>
+            <li>Authorized JavaScript origin: <code class="copy" data-copy-origin></code></li>
+            <li>Copy the <b>Client ID</b> here.</li>
+          </ol>
+        </details>
+      </div>
 
-      <label for="amDevToken">Apple Music developer token</label>
-      <input id="amDevToken" type="text" autocomplete="off" spellcheck="false" placeholder="eyJhbGciOiJFUzI1NiIs…">
-      <details>
-        <summary>How to get it (needs an Apple Developer account)</summary>
-        <ol>
-          <li>In <a href="https://developer.apple.com/account/resources/identifiers/list/musicId" target="_blank" rel="noopener">Identifiers</a>, create a <b>Media ID</b> with MusicKit enabled.</li>
-          <li>In <a href="https://developer.apple.com/account/resources/authkeys/list" target="_blank" rel="noopener">Keys</a>, create a key with <b>Media Services (MusicKit)</b> and download the <code>.p8</code> file.</li>
-          <li>Fill in the fields below and click <b>Generate</b>. The token lasts about 6 months. Your key file is only used for this step and is never saved.</li>
-        </ol>
-        <div class="gen">
-          <input id="amTeamId" type="text" placeholder="Team ID" autocomplete="off" spellcheck="false">
-          <input id="amKeyId" type="text" placeholder="Key ID" autocomplete="off" spellcheck="false">
-          <input id="amKeyFile" type="file" accept=".p8">
-          <button type="button" id="amGenerate" class="ghost small">Generate</button>
-        </div>
-      </details>
+      <div class="key-block">
+        <label for="amDevToken"><svg><use href="#i-apple"/></svg> Apple Music developer token</label>
+        <input id="amDevToken" type="text" autocomplete="off" spellcheck="false" placeholder="eyJhbGciOiJFUzI1NiIs…">
+        <details>
+          <summary>How to get it (needs an Apple Developer account)</summary>
+          <ol>
+            <li>In <a href="https://developer.apple.com/account/resources/identifiers/list/musicId" target="_blank" rel="noopener">Identifiers</a>, create a <b>Media ID</b> with MusicKit enabled.</li>
+            <li>In <a href="https://developer.apple.com/account/resources/authkeys/list" target="_blank" rel="noopener">Keys</a>, create a key with <b>Media Services (MusicKit)</b> and download the <code>.p8</code> file.</li>
+            <li>Fill in the fields below and click <b>Generate</b>. The token lasts about 6 months. Your key file is only used for this step and is never saved.</li>
+          </ol>
+          <div class="gen">
+            <input id="amTeamId" type="text" placeholder="Team ID" autocomplete="off" spellcheck="false">
+            <input id="amKeyId" type="text" placeholder="Key ID" autocomplete="off" spellcheck="false">
+            <input id="amKeyFile" type="file" accept=".p8">
+            <button type="button" id="amGenerate" class="btn btn-ghost btn-sm">Generate</button>
+          </div>
+        </details>
+      </div>
 
       <div class="row end">
-        <button value="cancel" class="ghost">Cancel</button>
-        <button id="saveSettings" value="save" class="btn primary">Save</button>
+        <button value="cancel" class="btn btn-ghost">Cancel</button>
+        <button id="saveSettings" value="save" class="btn btn-primary">Save</button>
       </div>
     </form>
   </dialog>
