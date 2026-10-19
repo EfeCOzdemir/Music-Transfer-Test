@@ -1,0 +1,8 @@
+// Optional defaults, so every device (e.g. your phone) works without typing keys into Settings.
+// Values typed into Settings on a device take priority over these.
+// Client IDs are designed to be public, so it's fine for these to be in a published site.
+window.APP_CONFIG = {
+  spotifyClientId: '',
+  googleClientId: '',
+  appleDevToken: '',
+};
