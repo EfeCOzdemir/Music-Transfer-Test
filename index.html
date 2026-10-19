@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Music Transfer Test</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js" async></script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">⇄</span>
+      <div>
+        <h1>Music Transfer Test</h1>
+        <p class="sub">Move playlists between Spotify, YouTube Music and Apple Music</p>
+      </div>
+    </div>
+    <button id="openSettings" class="ghost">Settings</button>
+  </header>
+
+  <main>
+    <!-- Step 1: accounts -->
+    <section class="card">
+      <h2><span class="num">1</span> Connect your accounts</h2>
+      <p class="hint">Connect the two services you want to move between.</p>
+      <div class="accounts">
+        <div class="account">
+          <div class="acc-head"><span class="dot sp"></span> Spotify</div>
+          <p class="acc-status" id="spotifyStatus">Not connected</p>
+          <div class="acc-actions">
+            <button id="spotifyConnect" class="btn sp-btn">Connect</button>
+            <button id="spotifyLogout" class="ghost small" hidden>Disconnect</button>
+          </div>
+        </div>
+        <div class="account">
+          <div class="acc-head"><span class="dot yt"></span> YouTube Music</div>
+          <p class="acc-status" id="youtubeStatus">Not connected</p>
+          <div class="acc-actions">
+            <button id="youtubeConnect" class="btn yt-btn">Connect</button>
+            <button id="youtubeLogout" class="ghost small" hidden>Disconnect</button>
+          </div>
+        </div>
+        <div class="account">
+          <div class="acc-head"><span class="dot am"></span> Apple Music</div>
+          <p class="acc-status" id="appleStatus">Not connected</p>
+          <div class="acc-actions">
+            <button id="appleConnect" class="btn am-btn">Connect</button>
+            <button id="appleLogout" class="ghost small" hidden>Disconnect</button>
+          </div>
+        </div>
+      </div>
+      <p class="hint" id="setupHint" hidden>
+        Add the developer keys for the services you use in <a href="#" id="setupLink">Settings</a> first.
+      </p>
+    </section>
+
+    <!-- Step 2: choose -->
+    <section class="card" id="chooseCard">
+      <h2><span class="num">2</span> Choose what to move</h2>
+      <div class="direction">
+        <div class="field">
+          <label for="fromService">From</label>
+          <select id="fromService">
+            <option value="spotify">Spotify</option>
+            <option value="youtube">YouTube Music</option>
+            <option value="apple">Apple Music</option>
+          </select>
+        </div>
+        <button id="swapBtn" class="ghost swap" title="Swap direction" aria-label="Swap direction">⇄</button>
+        <div class="field">
+          <label for="toService">To</label>
+          <select id="toService">
+            <option value="spotify">Spotify</option>
+            <option value="youtube" selected>YouTube Music</option>
+            <option value="apple">Apple Music</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label for="sourceSelect">Source playlist</label>
+          <select id="sourceSelect" disabled><option>Connect both accounts first</option></select>
+        </div>
+        <div class="field">
+          <label for="destSelect">Destination</label>
+          <select id="destSelect" disabled><option value="__new">New playlist</option></select>
+        </div>
+      </div>
+      <div class="field" id="newNameField">
+        <label for="newName">New playlist name</label>
+        <input id="newName" type="text" placeholder="Same as source">
+      </div>
+      <p class="hint" id="quotaHint"></p>
+      <div class="row">
+        <button id="matchBtn" class="btn primary" disabled>Find matches</button>
+        <button id="stopBtn" class="ghost" hidden>Stop</button>
+      </div>
+    </section>
+
+    <!-- Step 3: review -->
+    <section class="card" id="reviewCard" hidden>
+      <h2><span class="num">3</span> Review and transfer</h2>
+      <div class="progress"><div class="bar" id="bar"></div></div>
+      <p class="progress-text" id="progressText"></p>
+      <div class="summary" id="summary"></div>
+      <div class="table-wrap">
+        <table id="matchTable">
+          <thead><tr><th></th><th>Source song</th><th>Match</th><th>Confidence</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="row">
+        <button id="transferBtn" class="btn primary" disabled>Transfer</button>
+        <button id="exportBtn" class="ghost">Download unmatched list</button>
+      </div>
+      <div id="result" class="result" hidden></div>
+    </section>
+  </main>
+
+  <dialog id="settings">
+    <form method="dialog" class="settings-form">
+      <h2>Settings</h2>
+      <p class="hint">Each service needs a developer registration. Fill in only the ones you use. Keys stay in this browser.</p>
+
+      <label for="spClientId">Spotify Client ID</label>
+      <input id="spClientId" type="text" autocomplete="off" spellcheck="false">
+      <details>
+        <summary>How to get it</summary>
+        <ol>
+          <li>Open <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">developer.spotify.com/dashboard</a> → <b>Create app</b>.</li>
+          <li>Redirect URI: <code class="copy" data-copy-redirect></code></li>
+          <li>Tick <b>Web API</b>, save, then copy the <b>Client ID</b> here.</li>
+        </ol>
+      </details>
+
+      <label for="ggClientId">Google OAuth Client ID (YouTube Music)</label>
+      <input id="ggClientId" type="text" autocomplete="off" spellcheck="false">
+      <details>
+        <summary>How to get it</summary>
+        <ol>
+          <li>Open <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a> and create a project.</li>
+          <li>APIs &amp; Services → Library → enable <b>YouTube Data API v3</b>.</li>
+          <li>OAuth consent screen → External → add yourself as a <b>Test user</b>.</li>
+          <li>Credentials → Create credentials → OAuth client ID → <b>Web application</b>.</li>
+          <li>Authorized JavaScript origin: <code class="copy" data-copy-origin></code></li>
+          <li>Copy the <b>Client ID</b> here.</li>
+        </ol>
+      </details>
+
+      <label for="amDevToken">Apple Music developer token</label>
+      <input id="amDevToken" type="text" autocomplete="off" spellcheck="false" placeholder="eyJhbGciOiJFUzI1NiIs…">
+      <details>
+        <summary>How to get it (needs an Apple Developer account)</summary>
+        <ol>
+          <li>In <a href="https://developer.apple.com/account/resources/identifiers/list/musicId" target="_blank" rel="noopener">Identifiers</a>, create a <b>Media ID</b> with MusicKit enabled.</li>
+          <li>In <a href="https://developer.apple.com/account/resources/authkeys/list" target="_blank" rel="noopener">Keys</a>, create a key with <b>Media Services (MusicKit)</b> and download the <code>.p8</code> file.</li>
+          <li>Fill in the fields below and click <b>Generate</b>. The token lasts about 6 months. Your key file is only used for this step and is never saved.</li>
+        </ol>
+        <div class="gen">
+          <input id="amTeamId" type="text" placeholder="Team ID" autocomplete="off" spellcheck="false">
+          <input id="amKeyId" type="text" placeholder="Key ID" autocomplete="off" spellcheck="false">
+          <input id="amKeyFile" type="file" accept=".p8">
+          <button type="button" id="amGenerate" class="ghost small">Generate</button>
+        </div>
+      </details>
+
+      <div class="row end">
+        <button value="cancel" class="ghost">Cancel</button>
+        <button id="saveSettings" value="save" class="btn primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
